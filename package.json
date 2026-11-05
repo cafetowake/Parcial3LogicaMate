@@ -1,0 +1,11 @@
+{
+  "name": "evaluador-semantico",
+  "version": "1.0.0",
+  "description": "Evaluador semántico de fórmulas de primer orden en interpretaciones finitas (MM3032 Lógica Matemática)",
+  "scripts": {
+    "test": "node --test \"tests/*.test.js\""
+  },
+  "engines": { "node": ">=18" },
+  "author": "Paula Daniela de León, Luis Pedro Barillas Barrientos",
+  "private": true
+}
