@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <!-- Evaluador semántico de lógica de predicados. MM3032 Lógica Matemática, UVG. Autores: Paula Daniela de León y Luis Pedro Barillas Barrientos -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Evaluador semántico de lógica de predicados</title>
+  <meta name="author" content="Paula Daniela de León, Luis Pedro Barillas Barrientos">
+  <meta name="description" content="Evalúa fórmulas de primer orden en una interpretación finita ingresada por el usuario. Proyecto de MM3032 Lógica Matemática.">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="top-inner">
+      <div>
+        <h1>Evaluador semántico</h1>
+        <p class="sub">Lógica de predicados · interpretaciones finitas · MM3032 Lógica Matemática</p>
+      </div>
+      <div class="toolbar" role="group" aria-label="Herramientas">
+        <label class="tool">
+          <span>Ejemplos del curso</span>
+          <select id="examples" aria-label="Cargar un ejemplo"><option value="">Seleccionar…</option></select>
+        </label>
+        <button type="button" id="btn-export" class="ghost">Exportar JSON</button>
+        <label class="ghost button-like" for="file-import">Importar JSON</label>
+        <input type="file" id="file-import" accept="application/json,.json" hidden>
+      </div>
+    </div>
+    <div id="toolbar-msg" class="toolbar-msg" role="status" aria-live="polite"></div>
+  </header>
+
+  <main class="grid">
+    <div class="col col-lang">
+      <section class="card" id="sec-lang" aria-labelledby="h-lang">
+        <h2 id="h-lang"><span class="num">1</span> Lenguaje</h2>
+        <p class="help">Declare los símbolos no lógicos con su nombre y su aridad. Una constante es un símbolo funcional de aridad 0 (botón + Constante). Las variables son <code>u v w x y z</code> (con subíndice opcional, por ejemplo <code>x1</code>) y están reservadas. La igualdad <code>=</code> es un símbolo lógico y siempre está disponible.</p>
+        <div class="lang-head" aria-hidden="true"><span>Tipo</span><span>Nombre</span><span>Aridad</span><span></span></div>
+        <div id="lang-rows"></div>
+        <div class="row-actions">
+          <button type="button" id="add-pred" class="secondary">+ Predicado</button>
+          <button type="button" id="add-fn" class="secondary">+ Función</button>
+          <button type="button" id="add-const" class="secondary">+ Constante</button>
+        </div>
+        <div id="err-lang" class="errors" hidden></div>
+      </section>
+
+      <section class="card" id="sec-interp" aria-labelledby="h-interp">
+        <h2 id="h-interp"><span class="num">2</span> Interpretación</h2>
+        <label class="field">
+          <span class="label">Dominio <code>D</code> (finito y no vacío, separado por comas)</span>
+          <input type="text" id="domain" placeholder="1, 2, 3" spellcheck="false" autocomplete="off">
+        </label>
+        <div id="err-domain" class="errors" hidden></div>
+        <div id="interp-editors"></div>
+        <details class="formats">
+          <summary>Formato de las interpretaciones</summary>
+          <ul>
+            <li><b>Predicado</b> de aridad 1: elementos separados por comas, por ejemplo <code>1, 2</code>. De aridad 2 o más: tuplas entre paréntesis, por ejemplo <code>(1, 2), (2, 3)</code>. No se admiten relaciones vacías.</li>
+            <li><b>Función</b> de aridad n: una línea por tupla con el formato <code>a, b -&gt; c</code>. Debe estar definida en todo <code>D<sup>n</sup></code>.</li>
+            <li><b>Constante</b>: el elemento del dominio que la interpreta, por ejemplo <code>a</code>.</li>
+            <li>El botón <b>Tabla</b> permite editar gráficamente y se mantiene sincronizado con el texto.</li>
+          </ul>
+        </details>
+      </section>
+    </div>
+
+    <div class="col col-formula">
+      <section class="card" id="sec-formula" aria-labelledby="h-formula">
+        <h2 id="h-formula"><span class="num">3</span> Fórmula</h2>
+        <div class="symbols" role="group" aria-label="Símbolos lógicos">
+          <button type="button" data-ins="¬" title="Negación">¬</button>
+          <button type="button" data-ins="∧" title="Conjunción">∧</button>
+          <button type="button" data-ins="∨" title="Disyunción">∨</button>
+          <button type="button" data-ins="→" title="Implicación">→</button>
+          <button type="button" data-ins="↔" title="Equivalencia (extensión)">↔</button>
+          <button type="button" data-ins="∀" title="Cuantificador universal">∀</button>
+          <button type="button" data-ins="∃" title="Cuantificador existencial">∃</button>
+          <button type="button" data-ins="(" title="Abrir paréntesis">(</button>
+          <button type="button" data-ins=")" title="Cerrar paréntesis">)</button>
+          <button type="button" data-ins="=" title="Igualdad">=</button>
+          <button type="button" data-ins="≠" title="Desigualdad (extensión)">≠</button>
+          <button type="button" data-ins="," title="Coma">,</button>
+          <button type="button" id="btn-clear-formula" class="ghost" title="Borrar la fórmula">Borrar</button>
+        </div>
+        <label class="field">
+          <span class="label">Fórmula (también puede escribirla con el teclado)</span>
+          <input type="text" id="formula" class="mono big" placeholder="∀x (H(x) → M(x))" spellcheck="false" autocomplete="off">
+        </label>
+        <details class="formats">
+          <summary>Atajos de teclado y convenciones</summary>
+          <table class="keys">
+            <tr><th>Símbolo</th><th>Teclee</th></tr>
+            <tr><td>¬</td><td><code>~</code> o <code>!</code></td></tr>
+            <tr><td>∧</td><td><code>&amp;</code> o <code>^</code> o <code>/\</code></td></tr>
+            <tr><td>∨</td><td><code>|</code> o <code>\/</code></td></tr>
+            <tr><td>→</td><td><code>-&gt;</code> o <code>=&gt;</code></td></tr>
+            <tr><td>↔</td><td><code>&lt;-&gt;</code> o <code>&lt;=&gt;</code></td></tr>
+            <tr><td>∀ y ∃</td><td><code>forall x</code> y <code>exists x</code></td></tr>
+            <tr><td>≠</td><td><code>!=</code></td></tr>
+          </table>
+          <p class="help">Precedencia de mayor a menor: <code>¬</code> y los cuantificadores, <code>∧</code>, <code>∨</code>, <code>→</code> (asocia a la derecha), <code>↔</code>. Un cuantificador solo alcanza a la fórmula inmediata que le sigue, así que <code>∀x P(x) → Q(x)</code> se lee <code>(∀x P(x)) → Q(x)</code>. Use paréntesis para ampliar el alcance: <code>∀x (P(x) → Q(x))</code>. La lectura resultante se muestra abajo.</p>
+        </details>
+        <div id="formula-info" class="formula-info" aria-live="polite"></div>
+      </section>
+
+      <section class="card" id="sec-env" aria-labelledby="h-env">
+        <h2 id="h-env"><span class="num">4</span> Entorno</h2>
+        <div id="env-body"></div>
+        <div id="err-env" class="errors" hidden></div>
+      </section>
+
+    </div>
+
+    <div class="col col-res">
+      <section class="card" id="sec-result" aria-labelledby="h-result">
+        <h2 id="h-result"><span class="num">5</span> Resultado</h2>
+        <div class="eval-bar">
+          <button type="button" id="btn-eval" class="primary">Evaluar</button>
+          <label class="check"><input type="checkbox" id="full-eval"> Evaluación completa (lista todos los testigos y contraejemplos)</label>
+        </div>
+        <div id="status" class="status" aria-live="polite"></div>
+        <div id="result" aria-live="polite"></div>
+      </section>
+
+      <section class="card" id="sec-finder" aria-labelledby="h-finder">
+        <h2 id="h-finder">Buscador de modelos y contramodelos</h2>
+        <p class="help">Explora todas las interpretaciones del lenguaje declarado sobre dominios <code>{1, …, k}</code> y carga la primera que encuentre. Un contramodelo prueba que la fórmula no es válida. No encontrarlo en dominios pequeños no prueba su validez.</p>
+        <div class="eval-bar">
+          <label class="tool"><span>Tamaño máximo k</span>
+            <select id="finder-size"><option>1</option><option>2</option><option selected>3</option><option>4</option></select>
+          </label>
+          <button type="button" id="btn-model" class="secondary">Buscar modelo (I ⊨ φ)</button>
+          <button type="button" id="btn-counter" class="secondary">Buscar contramodelo (I ⊭ φ)</button>
+        </div>
+        <div id="finder-msg" class="status" aria-live="polite"></div>
+      </section>
+    </div>
+  </main>
+
+  <datalist id="dl-domain"></datalist>
+  <footer class="foot">Los resultados se calculan siguiendo la definición de verdad de Tarski: I ⊨<sub>l</sub> φ. Proyecto de MM3032 Lógica Matemática, UVG. Autores: Paula Daniela de León Godoy y Luis Pedro Barillas Barrientos.</footer>
+
+  <script src="js/syntax.js"></script>
+  <script src="js/interp.js"></script>
+  <script src="js/evaluator.js"></script>
+  <script src="js/analyze.js"></script>
+  <script src="js/finder.js"></script>
+  <script src="js/tree.js"></script>
+  <script src="js/examples.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
